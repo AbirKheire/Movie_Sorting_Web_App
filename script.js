@@ -263,26 +263,31 @@ function populateFilters() {
   });
 }
 
-function displayMovies(filteredMovies) {
+function displayMovies(movies) {
   const movieContainer = document.getElementById("movieContainer");
-  movieContainer.innerHTML = ""; // Réinitialiser l'affichage
+  movieContainer.innerHTML = ""; // Réinitialiser la liste des films
 
-  filteredMovies.forEach(movie => {
+  movies.forEach(movie => {
       const card = document.createElement("div");
       card.classList.add("movie-card");
 
+      const imageUrl = movie.poster_path
+          ? `https://image.tmdb.org/t/p/w500${movie.poster_path}`
+          : "assets/default-movie.jpg"; // Image par défaut si absente
+
       card.innerHTML = `
-          <img src="${movie.image}" alt="${movie.title}">
-          <h2>${movie.title} (${movie.year})</h2>
-          <p class="rating">Note: ${movie.rating}</p>
-          <p class="duration">Durée: ${movie.duration} min</p>
-          <p>Genres: ${movie.genre.join(", ")}</p>
-          <button class="recommend-btn" onclick="recommendMovie('${movie.title}')">Recommander</button>
+          <img src="${imageUrl}" alt="${movie.title}">
+          <h2>${movie.title} (${new Date(movie.release_date).getFullYear()})</h2>
+          <p class="rating">Note: ${movie.vote_average.toFixed(1)}</p>
+          <p class="duration">Durée: ${movie.runtime || "N/A"} min</p>
+          <p>Genres: ${movie.genre_ids.join(", ")}</p>
+          <button class="recommend-btn" onclick="recommendMovie('${movie.id}')">Recommander</button>
       `;
-      
+
       movieContainer.appendChild(card);
   });
 }
+
 
 function applyFilters() {
   const genreFilter = document.getElementById("genreFilter").value;
@@ -356,3 +361,22 @@ function recommendMovie(selectedTitle) {
   const recommendationTitles = recommendations.map(movie => `- ${movie.title} (${movie.year})`).join("\n");
   alert(`Films recommandés pour "${selectedTitle}":\n\n${recommendationTitles}`);
 }
+
+
+const API_URL = `https://api.themoviedb.org/3/movie/popular?api_key=${API_KEY}&language=fr-FR&page=1`;
+
+// Fonction pour récupérer les films depuis l'API
+async function fetchMovies() {
+    try {
+        const response = await fetch(API_URL);
+        const data = await response.json();
+        if (data.results) {
+            displayMovies(data.results);
+        }
+    } catch (error) {
+        console.error("Erreur lors de la récupération des films :", error);
+    }
+}
+
+// Lancer la récupération des films au chargement
+document.addEventListener("DOMContentLoaded", fetchMovies);
